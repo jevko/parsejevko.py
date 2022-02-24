@@ -59,3 +59,17 @@ def jevkoToString(jevko):
   for sub in jevko['subjevkos']:
     ret += f"{escape(sub['prefix'])}[{jevkoToString(sub['jevko'])}]"
   return ret + escape(jevko['suffix'])
+
+def argsToJevko(*args):
+  subjevkos = []
+  subjevko = {'prefix': ''}
+  for arg in args:
+    if (isinstance(arg, list)):
+      subjevko['jevko'] = argsToJevko(*arg)
+      subjevkos.append(subjevko)
+      subjevko = {'prefix': ''}
+    elif (isinstance(arg, str)):
+      subjevko['prefix'] += arg
+    else:
+      raise Exception(f"Argument #{i} has unrecognized type ({type(arg)})! Only strings and arrays are allowed. The argument's value is: {arg}")
+  return {'subjevkos': subjevkos, 'suffix': subjevko['prefix']}
