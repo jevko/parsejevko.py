@@ -73,3 +73,43 @@ def argsToJevko(*args):
     else:
       raise Exception(f"Argument #{i} has unrecognized type ({type(arg)})! Only strings and arrays are allowed. The argument's value is: {arg}")
   return {'subjevkos': subjevkos, 'suffix': subjevko['prefix']}
+
+import math 
+def interjevkoToSchema(jevko):
+  subjevkos = jevko['subjevkos']
+  suffix = jevko['suffix']
+
+  trimmed = suffix.strip()
+  if (len(jevko['subjevkos']) == 0):
+    if (trimmed == 'true' or trimmed == 'false'):
+      return {'type': 'boolean'}
+    if (trimmed == 'null' or suffix == ''):
+      return {'type': 'null'}
+
+    if (trimmed == 'NaN'):
+      return {'type': 'float64'}
+    try:
+      num = float(trimmed)
+      return {'type': 'float64'}
+    except ValueError:
+      return {'type': 'string'}
+    
+  if (trimmed != ''):
+    raise Exception('suffix must be blank')
+
+  prefix = subjevkos[0]['prefix']
+  if (prefix.strip() == ''):
+    itemSchemas = []
+    for sub in subjevkos:
+      if (sub['prefix'].strip() != ''):
+        raise Exception('bad tuple/array')
+      itemSchemas.append(interjevkoToSchema(sub['jevko']))
+    return {'type': 'tuple', 'itemSchemas': itemSchemas}
+
+  props = {}
+  for sub in subjevkos:
+    key = sub['prefix'].strip()
+    if (key in props):
+      raise Exception(f"duplicate key ({key})")
+    props[key] = interjevkoToSchema(sub['jevko'])
+  return {'type': 'object', 'props': props}
